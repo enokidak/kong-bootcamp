@@ -1,4 +1,4 @@
-FROM kong/kong-gateway:3.6
+FROM kong/kong-gateway:3.10
 
 # 推奨: 必要なプラグインを事前インストール（カスタム/公式含む）
 # RUN luarocks install kong-plugin-xxx
