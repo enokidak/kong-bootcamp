@@ -1,0 +1,50 @@
+name: Push and Scan GHCR Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Pull and Tag Docker image
+        run: |
+          set -x
+          docker pull ${{ vars.REPO_NAME_DOCKER }}:${{ vars.IMAGE_TAG_DOCKER }}
+          docker tag ${{ vars.REPO_NAME_DOCKER }}:${{ vars.IMAGE_TAG_DOCKER }} ghcr.io/${{ github.repository_owner }}/${{ vars.REPO_NAME_GHCR }}:${{ vars.IMAGE_TAG_GHCR }}
+
+      - name: Push Docker image to GHCR
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ vars.REPO_NAME_GHCR }}:${{ vars.IMAGE_TAG_GHCR }}
+
+      - name: Scan image using Trivy
+        uses: aquasecurity/trivy-action@v0.14.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/${{ vars.REPO_NAME_GHCR }}:${{ vars.IMAGE_TAG_GHCR }}
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+          output: "trivy-scan-results.txt"
+
+      - name: Upload scan results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-results
+          path: trivy-scan-results.txt
