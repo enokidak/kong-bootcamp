@@ -28,8 +28,8 @@ jobs:
 
       - name: Build Kong Image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/kong-gateway:3.10.0.1 .
+          docker build -t ghcr.io/${{ github.repository }}/kong-gateway:3.10.0.2 .
 
       - name: Push Kong Image
         run: |
-          docker push ghcr.io/${{ github.repository }}/kong-gateway:3.10.0.1
+          docker push ghcr.io/${{ github.repository }}/kong-gateway:3.10.0.2
