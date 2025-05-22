@@ -24,7 +24,7 @@ jobs:
 
       - name: Build Kong Image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/kong-gateway:3.10.0.1 .
+          docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/${{ github.repository }}/kong-gateway:3.10.0.1 .
 
       - name: Push Kong Image
         run: |
