@@ -4,7 +4,7 @@ FROM kong/kong-gateway:3.6
 # RUN luarocks install kong-plugin-xxx
 
 # 環境変数や構成ファイル（kong.conf）をCOPYしておく
-COPY kong.conf /etc/kong/kong.conf
+# COPY kong.conf /etc/kong/kong.conf
 
 # Kongユーザのセキュリティ強化
 USER kong
