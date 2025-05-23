@@ -23,8 +23,8 @@ jobs:
 
       - name: Build APIOPS Image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/konnect-apiops -f apiops/Dockerfile apiops/
-
+          docker build -t ghcr.io/${{ github.repository }}/konnect-apiops:latest \
+          -f apiops/Dockerfile apiops/
       - name: Push APIOPS Image
         run: |
           docker push ghcr.io/${{ github.repository }}/konnect-apiops
