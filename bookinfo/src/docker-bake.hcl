@@ -7,7 +7,7 @@ variable "HUB" {
 }
 
 variable "PLATFORMS" {
-  default = "linux/amd64,linux/arm64"
+  default = "linux/arm64"
 }
 
 images = [
