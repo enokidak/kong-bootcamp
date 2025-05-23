@@ -1,0 +1,43 @@
+name: Build Bookinfo for ARM64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        platform:
+          - linux/arm64
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Build Bookinfo with docker buildx bake (native ARM)
+        env:
+          BOOKINFO_HUB: ghcr.io/${{ github.repository }}
+          BOOKINFO_TAG: ${{ matrix.platform }}-latest
+          CI: "true" # ← NOTE: Set this to allow pushing
+        run: |
+          set -eux
+
+          # 任意：バージョン更新を含めたい場合
+          export BOOKINFO_UPDATE="false"
+
+          cd samples/bookinfo
+
+          # Execute your original script (modified as needed)
+          env TAGS="${BOOKINFO_TAG}" HUB="${BOOKINFO_HUB}" \
+            docker buildx bake -f src/docker-bake.hcl --push
+
+          # 任意：push後の確認（manifest）
+          docker buildx imagetools inspect "${BOOKINFO_HUB}/examples-bookinfo-productpage:${BOOKINFO_TAG}"
