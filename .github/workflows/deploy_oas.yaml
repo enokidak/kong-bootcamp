@@ -3,7 +3,7 @@ name: Convert OpenAPI Spec to Kong and Deploy
 on:
   push:
     paths:
-      - docs/openapi/api-spec.yaml
+      - apiops/docs/openapi/api-spec.yaml
 
 env:
   KONNECT_URL: "https://${{ vars.KONNECT_REGION }}.api.konghq.com"
