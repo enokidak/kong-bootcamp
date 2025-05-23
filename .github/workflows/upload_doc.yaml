@@ -3,7 +3,7 @@ name: Upload Document for API Product to Konnect / Dev Portal
 on:
   push:
     paths:
-      - docs/product.md
+      - apiops/docs/product.md
   workflow_dispatch:
 
 env:
@@ -22,7 +22,7 @@ jobs:
       - name: Upload product.md
         shell: bash
         run: |
-          file="docs/product.md"
+          file="apiops/docs/product.md"
           msg="Document '$file' has been successfully uploaded."
           return_code=0
           set -x
