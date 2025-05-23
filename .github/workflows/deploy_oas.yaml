@@ -60,4 +60,4 @@ jobs:
           deck gateway sync ./kong.yaml  --konnect-addr $KONNECT_URL --konnect-control-plane-name $CONTROL_PLANE --konnect-token ${{ secrets.KONNECT_TOKEN }} --select-tag $TAG
       - name: Confirmation
         run: |
-          ./tests/e2e.sh
+          ./apiops/tests/e2e.sh
