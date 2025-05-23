@@ -24,3 +24,5 @@ RUN install /tmp/inso /usr/local/bin/
 
 WORKDIR /root
 CMD bash
+
+RUN echo "done"
