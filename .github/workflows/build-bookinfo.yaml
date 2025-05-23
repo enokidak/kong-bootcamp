@@ -33,11 +33,9 @@ jobs:
           # 任意：バージョン更新を含めたい場合
           export BOOKINFO_UPDATE="false"
 
-          cd bookinfo
-
           # Execute your original script (modified as needed)
           env TAGS="${BOOKINFO_TAG}" HUB="${BOOKINFO_HUB}" \
-            docker buildx bake -f src/docker-bake.hcl --push
+            docker buildx bake -f bookinfo/src/docker-bake.hcl --push
 
           # 任意：push後の確認（manifest）
           docker buildx imagetools inspect "${BOOKINFO_HUB}/examples-bookinfo-productpage:${BOOKINFO_TAG}"
