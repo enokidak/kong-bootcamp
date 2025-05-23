@@ -25,7 +25,7 @@ jobs:
       - name: Build Bookinfo with docker buildx bake (native ARM)
         env:
           BOOKINFO_HUB: ghcr.io/${{ github.repository }}
-          BOOKINFO_TAG: ${{ matrix.platform }}-latest
+          BOOKINFO_TAG: arm64-latest
           CI: "true" # ← NOTE: Set this to allow pushing
         run: |
           set -eux
