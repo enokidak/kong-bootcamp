@@ -17,7 +17,7 @@ jobs:
       image: ghcr.io/enokidak/kong-bootcamp/konnect-apiops
     name: Convert OpenAPI Spec and deploy to Konnect
     env:
-      SPECFILE: "docs/openapi/api-spec.yaml"
+      SPECFILE: "apiops/docs/openapi/api-spec.yaml"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
