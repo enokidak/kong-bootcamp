@@ -1,0 +1,95 @@
+name: Upload Document for API Product to Konnect / Dev Portal
+
+on:
+  push:
+    paths:
+      - docs/product.md
+  workflow_dispatch:
+
+env:
+  REGIONAL_EP: "https://${{ vars.KONNECT_REGION }}.api.konghq.com/v2"
+  AUTH_HEADER: "Authorization: Bearer ${{ secrets.KONNECT_TOKEN }}"
+  PRODUCT_NAME: "${{ vars.PRODUCT_NAME }}"
+
+jobs:
+  upload-doc:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/enokidak/kong-bootcamp/konnect-apiops
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Upload product.md
+        shell: bash
+        run: |
+          file="docs/product.md"
+          msg="Document '$file' has been successfully uploaded."
+          return_code=0
+          set -x
+          echo "Detected changes in $file"
+
+          # Get Product ID from PRODUCT_NAME.
+          PRODUCT_ID=$(curl -X GET -s \
+                         ${REGIONAL_EP}/api-products \
+                         -H "${AUTH_HEADER}" \
+                       | jq -r '.data[] | select(.name == "'"$PRODUCT_NAME"'") | .id' || true)
+
+          if [ "$(echo $PRODUCT_ID | wc -w)" -ne 1 ]; then
+            echo "[Error] Failed to obtain PRODUCT_ID or obtained multiple PRODUCT_NAME: $PRODUCT_NAME, PRODUCT_IDs: $PRODUCT_ID"
+            exit 1
+          fi
+
+          # Remove path and suffix.
+          filename=$(echo "$file" | sed "s|.*/||;s|.md$||")
+
+          # Get Document ID
+          DOC_ID=$(curl -s -X GET \
+            ${REGIONAL_EP}/api-products/${PRODUCT_ID}/documents \
+            -H "${AUTH_HEADER}" \
+            | jq -r --arg filename "${filename}" '.data[] | select(.title == $filename) | .id' || true)
+
+          # Encode the file contents in base64
+          CONTENT=$(base64 -w0 "$file")
+
+          if [ -z "$DOC_ID" ]; then
+            # If no document exists, create a new one
+            action=create
+            curl_response=$(curl -w "\n%{http_code}" -X POST \
+              ${REGIONAL_EP}/api-products/${PRODUCT_ID}/documents \
+              -H "${AUTH_HEADER}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "slug": "'"$filename"'",
+                "status": "published",
+                "title": "'"$filename"'",
+                "content": "'"$CONTENT"'",
+                "metadata": {
+                  "author": "John Doe"
+                }
+              }')
+          else
+            # If the document exists, update it
+            action=update
+            curl_response=$(curl -w "\n%{http_code}" -X PATCH \
+              ${REGIONAL_EP}/api-products/${PRODUCT_ID}/documents/$DOC_ID \
+              -H "${AUTH_HEADER}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "content": "'"$CONTENT"'"
+              }')
+          fi
+
+          http_code=$(echo "$curl_response" | tail -n 1)
+
+          # Check if the request succeeded
+          if [[ "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
+            msg="[Error] Failed to $action document. (err: $curl_response)"
+            return_code=1
+          fi
+
+          echo ""
+          echo "---"
+          echo "Status Code: $http_code"
+          echo $msg
+          echo "---"
+          exit $return_code
