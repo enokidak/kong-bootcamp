@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - apiops/docs/openapi/api-spec.yaml
+  workflow_dispatch:
 
 env:
   KONNECT_URL: "https://${{ vars.KONNECT_REGION }}.api.konghq.com"
