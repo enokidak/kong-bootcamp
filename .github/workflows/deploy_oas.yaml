@@ -30,7 +30,7 @@ jobs:
           cat $SPECFILE
           deck file openapi2kong -s $SPECFILE -o ./kong.yaml --verbose 9
           # Add plugins
-          deck file add-plugins -s ./kong.yaml -o ./kong.yaml kong-plugins/*
+          deck file add-plugins -s ./kong.yaml -o ./kong.yaml apiops/kong-plugins/*
           # Add a tag
           deck file add-tags -s ./kong.yaml -o ./kong.yaml $TAG
           cat kong.yaml
