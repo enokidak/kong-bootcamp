@@ -1,9 +1,9 @@
-name: Build and Push Kong Image
+name: Build and Push APIOps Image
 
 on:
   push:
     paths:
-      - docs/openapi/api-spec.yaml
+      - docs/Dockerfile
 
 jobs:
   build:
