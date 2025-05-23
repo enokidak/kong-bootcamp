@@ -32,7 +32,7 @@ jobs:
       - name: Upload api-spec.yaml
         shell: bash
         run: |
-          file="docs/openapi/api-spec.yaml"
+          file="apiops/docs/openapi/api-spec.yaml"
           msg="Document '$file' has been successfully uploaded."
           return_code=0
           set -x
