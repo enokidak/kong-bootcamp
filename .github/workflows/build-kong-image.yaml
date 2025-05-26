@@ -2,7 +2,8 @@ name: Build and Push Kong Image
 
 on:
   push:
-    branches: [main]
+    paths:
+      - kong-gateway/Dockerfile
 
 jobs:
   build:
