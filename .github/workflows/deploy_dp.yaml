@@ -2,6 +2,10 @@ name: Deploy Kong Data Plane (AKS)
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Build and Push Kong Image"]
+    types:
+      - completed
 
 jobs:
   deploy-dp:
@@ -64,12 +68,24 @@ jobs:
             --key=./certs/tls.key \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Download image tag
+        uses: actions/download-artifact@v4
+        with:
+          name: image_tag
+          path: .
+
+      - name: Read image tag
+        id: image_tag
+        run: |
+          export IMAGE_TAG=$(cat image_tag.txt)
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
       - name: Generate values.yaml
         run: |
           cat <<EOF > ./values.yaml
           image:
             repository: ${{ vars.KONG_REPO }}
-            tag: ${{ vars.KONG_VER }}
+            tag: ${{ steps.image_tag.outputs.tag }}
             pullSecrets:
               - ghcr-secret
 
