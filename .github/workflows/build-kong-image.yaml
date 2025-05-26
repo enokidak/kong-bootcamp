@@ -51,6 +51,7 @@ jobs:
           docker push ghcr.io/${{ github.repository }}/kong-gateway:${{ env.IMAGE_TAG }}
 
       - name: Scan image using Trivy
+        id: trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ghcr.io/${{ github.repository }}/kong-gateway:${{ env.IMAGE_TAG }}
