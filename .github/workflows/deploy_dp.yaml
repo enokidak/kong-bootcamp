@@ -1,11 +1,11 @@
 name: Deploy Kong Data Plane (AKS)
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows: ["Build and Push Kong Image"]
     types:
       - completed
+    workflow_dispatch:
 
 jobs:
   deploy-dp:
@@ -14,6 +14,9 @@ jobs:
       KONNECT_API: https://us.api.konghq.com/v2
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up dependencies
         run: |
           sudo apt-get update
