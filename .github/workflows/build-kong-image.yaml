@@ -68,7 +68,7 @@ jobs:
           path: trivy-scan-results.txt
 
       - name: Tag as latest and push
-        if: ${{ success() && steps.trivy.outcome == 'success' }}
+        if: ${{ success() && steps.trivy.conclusion == 'success' }}
         run: |
           docker tag ghcr.io/${{ github.repository }}/kong-gateway:${{ env.IMAGE_TAG }} ghcr.io/${{ github.repository }}/kong-gateway:latest
           docker push ghcr.io/${{ github.repository }}/kong-gateway:latest
