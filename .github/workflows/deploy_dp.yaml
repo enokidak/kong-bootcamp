@@ -6,6 +6,10 @@ on:
     types:
       - completed
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Kongイメージのタグ"
+        required: false
 
 jobs:
   deploy-dp:
@@ -76,6 +80,20 @@ jobs:
         with:
           name: image_tag
           path: .
+          if-no-files-found: warn
+
+      - name: Get Image Tag
+        id: get_image_tag
+        run: |
+          if [ -f image_tag.txt ]; then
+            export IMAGE_TAG=$(cat image_tag.txt)
+          elif [ ! -z "${{ github.event.inputs.image_tag }}" ]; then
+            export IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          else
+            echo "No image_tag found!"
+            exit 1
+          fi
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Read image tag
         id: image_tag
