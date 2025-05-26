@@ -5,7 +5,7 @@ on:
     workflows: ["Build and Push Kong Image"]
     types:
       - completed
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   deploy-dp:
