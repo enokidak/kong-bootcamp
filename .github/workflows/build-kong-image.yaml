@@ -5,6 +5,10 @@ on:
     paths:
       - kong-gateway/Dockerfile
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Kongイメージのタグ"
+        required: false
 
 jobs:
   build:
@@ -28,9 +32,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GH_TOKEN }}
 
-      - name: Set image tag (Commit ID or Tag name)
+      - name: Set image tag (Commit ID or Input tag name)
         id: tag
-        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+        run: |
+          if [ ! -z "${{ github.event.inputs.image_tag }}" ]; then
+            echo "IMAGE_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          fi
 
       - name: Build Kong Image
         run: |
@@ -40,39 +49,6 @@ jobs:
       - name: Push Kong Image
         run: |
           docker push ghcr.io/${{ github.repository }}/kong-gateway:${{ env.IMAGE_TAG }}
-
-      # - name: Save image tag
-      #   run: echo "${{ env.IMAGE_TAG }}" > image_tag.txt
-
-      # - name: Upload image tag
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: image_tag
-      #     path: image_tag.txt
-
-      - name: Get latest semantic version tag
-        id: get_latest_tag
-        run: |
-          tags=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://ghcr.io/v2/${{ github.repository }}/kong-gateway/tags/list" | jq -r '.tags[]')
-          latest=$(echo "$tags" | grep -E '^3\.10\.0\.[0-9]+$' | sort -V | tail -n1)
-          echo "LATEST_TAG=$latest" >> $GITHUB_ENV
-          echo "Latest tag: $latest"
-
-      - name: Calculate next version
-        id: next_version
-        run: |
-          LATEST_TAG="${{ env.LATEST_TAG }}"
-          if [[ -z "$LATEST_TAG" ]]; then
-            echo "No previous tag found, this should not happen."
-            exit 1
-          fi
-          BASE="3.10.0"
-          PATCH2=$(echo $LATEST_TAG | awk -F. '{print $4}')
-          NEXT_PATCH2=$((PATCH2+1))
-          NEXT_VERSION="${BASE}.${NEXT_PATCH2}"
-          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_ENV
-          echo "Next version: $NEXT_VERSION"
 
       - name: Scan image using Trivy
         uses: aquasecurity/trivy-action@master
@@ -94,7 +70,5 @@ jobs:
       - name: Tag as latest and push
         if: ${{ success() && steps.trivy.outcome == 'success' }}
         run: |
-          docker tag ghcr.io/${{ github.repository }}/kong-gateway:${{ env.IMAGE_TAG }} ghcr.io/${{ github.repository }}/kong-gateway:${{ env.NEXT_VERSION }}
-          docker push ghcr.io/${{ github.repository }}/kong-gateway:${{ env.NEXT_VERSION }}
           docker tag ghcr.io/${{ github.repository }}/kong-gateway:${{ env.IMAGE_TAG }} ghcr.io/${{ github.repository }}/kong-gateway:latest
           docker push ghcr.io/${{ github.repository }}/kong-gateway:latest
