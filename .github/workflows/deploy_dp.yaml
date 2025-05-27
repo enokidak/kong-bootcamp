@@ -121,9 +121,7 @@ jobs:
         run: |
           helm repo add kong https://charts.konghq.com
           helm repo update
-          helm upgrade -i my-kong kong/kong -n kong --values ./values.yaml --wait --timeout 600s || \
-          helm uninstall my-kong -n kong && \
-          helm install my-kong kong/kong -n kong --values ./values.yaml
+          helm upgrade -i demo-kong kong/kong -n kong --values ./values.yaml --wait --timeout 600s
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
