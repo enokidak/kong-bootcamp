@@ -101,9 +101,7 @@ kubectl apply -f bookinfo/productpage-ingress.yaml
 
 ### 3. BookInfoサービスがKubernetes上で稼働していることを確認
 ```
-kubectl get pods -n bookinfo
-kubectl get svc -n bookinfo
-kubectl get ingress
+kubectl get pods,svc,ing -n bookinfo
 ```
 
 - すべてのPodがRunningになっていること
