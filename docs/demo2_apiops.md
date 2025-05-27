@@ -34,8 +34,9 @@ APIOpsを導入することで…
 | 1    | OpenAPI Spec/ドキュメント/CI資材がGitHubで一元管理されていることを確認     | すべてのAPI関連資産が構成管理・自動化されている      |
 | 2    | BookInfoアプリをKubernetes上にデプロイ           | 本番運用を想定したAPI環境の迅速な構築を実演  |
 | 3    | BookInfoアプリを外部公開（Ingress/Kong連携）       | 実際のAPI公開運用を踏まえた接続イメージを提示     |
-| 4    | APIOps（OpenAPI→Kong自動反映）によりKong GatewayへBookInfo設定をデプロイ | API変更が即座かつ一貫性を持って適用されるプロセスを実証 |
-| 5    | 管理画面・Dev Portal等でAPI/ドキュメント反映を確認       | 運用結果の可視化および再現性の高さを確認 |
+| 4    | Kong GatewayへBookInfo設定をデプロイ | バックエンドAPIをKongを利用して一元管理  |
+| 5    | APIOps（OpenAPI→Kong自動反映）のCI/CDパイプラインを実行 | API変更が即座かつ一貫性を持って適用されるプロセスを実証 |
+| 6    | 管理画面・Dev Portal等でAPI/ドキュメント反映を確認       | 運用結果の可視化および再現性の高さを確認 |
 
 
 
@@ -108,7 +109,22 @@ kubectl get ingress
 - すべてのPodがRunningになっていること
 - Ingressが作成されていること
 
-### 4. APIOps（OpenAPI→Kong自動反映）によりKong GatewayへBookInfo設定をデプロイ
+
+### 4. Kong GatewayへBookInfo用設定（Kongリソース）を反映
+1. deck用マニフェストの確認
+※ deck-bookinfo.yaml などでKong用の設定を用意（Service/Route/Plugin等）
+
+2. deck CLIでKonnectへ反映
+```
+deck --konnect-addr https://us.api.konghq.com \
+  --konnect-control-plane-name default \
+  --konnect-token <KONNECT_TOKEN> \
+  gateway sync deck-bookinfo.yaml
+```
+※ <KONNECT_TOKEN>はKong KonnectのAPIキーに置き換えてください
+
+
+### 5. APIOps（OpenAPI→Kong自動反映）によりKong GatewayへBookInfo設定をデプロイ
 1. OpenAPI Specを編集（例: エンドポイント追加/修正）
 
 ```
