@@ -3,7 +3,7 @@ name: Convert OpenAPI Spec to Kong and Deploy
 on:
   push:
     paths:
-      - apiops/docs/openapi/api-spec.yaml
+      - bookinfo/openapi.yaml
   workflow_dispatch:
 
 env:
@@ -18,7 +18,7 @@ jobs:
       image: ghcr.io/enokidak/kong-bootcamp/konnect-apiops
     name: Convert OpenAPI Spec and deploy to Konnect
     env:
-      SPECFILE: "apiops/docs/openapi/api-spec.yaml"
+      SPECFILE: "bookinfo/openapi.yaml"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,9 +38,6 @@ jobs:
         with:
           name: kong.yaml
           path: kong.yaml
-      # Validation doen't work with Konnect.
-      # - name: Validate Kong Config
-      #   run: deck gateway validate ./kong.yaml
       - name: Back up current settings
         run: |
           set -x

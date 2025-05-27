@@ -43,7 +43,7 @@ APIOpsを導入することで…
 
 ## 各ステップの詳細手順
 
-### 1.  資材（コード/構成ファイル）確認
+### 1.  資材（コード/構成ファイル）確認と環境変数の設定
 1. GitHubリポジトリの取得またはブラウザ参照
 ```
 git clone https://github.com/<ORG>/<REPO>.git
@@ -61,6 +61,23 @@ cat kong-gateway/Dockerfile
 ls -l iac/
 cat iac/values.yaml
 # KubernetesやHelm、Terraform等の定義内容をご確認ください
+```
+
+4. 環境変数の設定
+```
+GIT_REPO=enokidak/kong-bootcamp
+
+# Kong関連
+KONNECT_REGION=us
+CONTROL_PLANE=default
+TAG=bookinfo
+
+gh variable set KONNECT_REGION --body $KONNECT_REGION --repo $GIT_REPO
+gh variable set CONTROL_PLANE --body $CONTROL_PLANE --repo $GIT_REPO
+gh variable set TAG --body $TAG --repo $GIT_REPO
+
+KONNECT_TOKEN=<your-konnect-pat>
+gh secret set KONNECT_TOKEN --body $KONNECT_TOKEN --repo $GIT_REPO
 ```
 
 
