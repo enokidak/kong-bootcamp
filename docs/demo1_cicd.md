@@ -7,6 +7,7 @@ CICDとIaCを活用することで、
 - 手作業による属人化やミスを減らす
 - デプロイフローの自動化・標準化
 - 本番環境に近いテスト環境をすぐ用意できる
+
 といった現代的な運用メリットを最大化できます。
 
 ## 得られること
@@ -22,7 +23,7 @@ CICDとIaCを活用することで、
 ## デモの流れ
 | ステップ | 内容                                       | ポイント                 |
 | :--- | :--------------------------------------- | :------------------- |
-| 1    | Kong Konnect管理画面にログインし、標準化イメージの運用イメージを確認 | SaaS運用＋標準化＝現場負担軽減の訴求 |
+| 1    | Kong Konnectにログインし、デプロイ操作を確認 | SaaS運用＋標準化＝現場負担軽減の訴求 |
 | 2    | GitHubでゴールデンイメージ（Dockerfile等）やIaC資材を確認   | 全資産がコード化されている安心感     |
 | 3    | GitHub Actionsでゴールデンイメージを自動ビルド＆脆弱性スキャン   | “誰がやっても同じ・早い・安全”を見せる |
 | 4    | IaCでData Planeノードを自動デプロイ                 | ワンクリック再現性＆自動化の強み     |
@@ -33,12 +34,14 @@ CICDとIaCを活用することで、
 
 ### 1. 標準化イメージ（ゴールデンイメージ）の運用確認
 1. Kong Konnect管理画面にログイン
+   
    ブラウザで Kong Konnect にアクセスし、ご自身のアカウントでログインしてください。
-2. 「ゴールデンイメージ」運用イメージの可視化
+3. 「ゴールデンイメージ」運用イメージの可視化
+
    SaaSの統合管理で標準イメージやライフサイクルが一元管理されている点を確認します。
    管理画面上でのバージョン管理や適用状況もご覧いただけます。
 
-### 2.  資材（コード/構成ファイル）確認
+### 2.  資材（コード/構成ファイル）確認と環境変数の設定
 1. GitHubリポジトリの取得またはブラウザ参照
 ```
 git clone https://github.com/<ORG>/<REPO>.git
@@ -58,6 +61,31 @@ cat iac/values.yaml
 # KubernetesやHelm、Terraform等の定義内容をご確認ください
 ```
 
+4. 環境変数の設定
+```
+
+AKS_RESOURCE_GROUP=<your-azure-resource-group>
+AKS_CLUSTER_NAME=<your-aks-cluster>
+GH_TOKEN=<your-pat>
+GH_TOKEN=<your-azure-credentials>
+KONNECT_TOKEN=<your-konnect-pat>
+CP_NAME=default
+KONG_REPO=ghcr.io/enokidak/kong-bootcamp/kong-gateway
+GIT_REPO=enokidak/kong-bootcamp
+
+az ad sp create-for-rbac --name "kongtraining-enk-app" --role contributor \
+  --scopes /subscriptions/73ef49b8-168e-4e6e-8e23-a5fed757e4f5/resourceGroups/rg-kong-training \
+  --json-auth
+
+gh secret set AZURE_CREDENTIALS --body $AZURE_CREDENTIALS
+gh secret set KONNECT_TOKEN --body $KONNECT_TOKEN
+gh secret set GH_TOKEN --body $GH_TOKEN
+
+
+
+
+
+```
 
 ### 3. GitHub Actionsnによる、ゴールデンイメージの自動ビルドと脆弱性スキャン
 1. GitHub Actions画面へアクセス
