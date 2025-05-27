@@ -66,10 +66,35 @@ cat iac/values.yaml
 
 ### 2. BookInfoアプリのKubernetesデプロイ
 0. アプリ公開用のContourをデプロイ
-```
-Qiita参照
-```
+Contourのインストール
+今回はディストリビューション依存をなくすため、Tanzu Packagesは使わずに普通にOSS版のContourをインストールする。
 
+```
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install contour bitnami/contour --namespace projectcontour --create-namespace
+```
+Podが立ち上がってEnvoyのServiceにExternal-IPが割り振られればOK。
+```
+kubectl get all -n projectcontour
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/contour-contour-64c7959cf9-vk684   1/1     Running   0          91s
+pod/contour-envoy-b72ld                2/2     Running   0          91s
+pod/contour-envoy-bkxvp                2/2     Running   0          91s
+pod/contour-envoy-plspq                2/2     Running   0          91s
+
+NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
+service/contour         ClusterIP      10.102.173.86    <none>           8001/TCP                     91s
+service/contour-envoy   LoadBalancer   10.100.171.238   10.214.154.165   80:32533/TCP,443:31826/TCP   91s
+
+NAME                           DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+daemonset.apps/contour-envoy   3         3         3       3            3           <none>          91s
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/contour-contour   1/1     1            1           91s
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/contour-contour-64c7959cf9   1         1         1       92s
+```
 
 1. Namespaceの作成
 
