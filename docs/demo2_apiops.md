@@ -1,21 +1,20 @@
-# 【WIP】APIOpsデモ作業ガイド
+# APIOpsデモ作業ガイド
 
 ## 概要
 本デモでは、BookInfoアプリを例に、APIOpsを用いて、API設計・定義（OpenAPI）からKong Gatewayへのデプロイ、その後のドキュメント管理・自動公開までを一連のCI/CDパイプラインで自動化する流れを体験いただきます。
 
 APIOpsを導入することで…
-- API仕様と実装・管理の“ズレ”を防ぐ
-- テスト・差分検証・公開まで一気通貫で自動化
-- 属人作業を極小化し、開発・運用の品質を統一
-といった現代的なAPI運用メリットを最大化できます。
+- API仕様と実装・運用の一貫性の確保
+- テストからデプロイ・公開に至るまでのプロセス自動化
+- 標準化されたプロセスによる運用品質の向上と属人化の排除
 
+といった、APIの運用管理における信頼性・一貫性・生産性の向上が期待できます。
 
 
 ## 得られること
 - OpenAPIの記述・更新がそのままKong GatewayのAPI設定に反映される
 - 設計・テスト・差分管理・デプロイ・公開が全自動で再現できる
 - API仕様書やAPIドキュメントも自動でKonnect Dev Portalに反映される
-
 
 
 ## 前提条件
@@ -32,38 +31,30 @@ APIOpsを導入することで…
 ## デモの流れ
 | ステップ | 内容                                     | ポイント            |
 | :--- | :------------------------------------- | :-------------- |
-| 1    | OpenAPI Spec/ドキュメント/CI資材がGitHubで一元管理されていることを確認     | 全API資産が**コード化・自動化**       |
-| 2    | BookInfoアプリをKubernetes上にデプロイ           | 本番さながらのAPIを即用意  |
-| 3    | BookInfoアプリを外部公開（Ingress/Kong連携）       | API運用の実際を体験     |
-| 4    | Kong GatewayへBookInfo設定をデプロイ           | API管理自動化の第一歩    |
-| 5    | APIOps（OpenAPI→Kong自動反映）CI/CDパイプラインを実行 | “誰がやっても同じ・すぐ反映” |
-| 6    | 管理画面・Dev Portal等でAPI/ドキュメント反映を確認       | 結果が**見える化・再現性** |
+| 1    | OpenAPI Spec/ドキュメント/CI資材がGitHubで一元管理されていることを確認     | すべてのAPI関連資産が構成管理・自動化されている      |
+| 2    | BookInfoアプリをKubernetes上にデプロイ           | 本番運用を想定したAPI環境の迅速な構築を実演  |
+| 3    | BookInfoアプリを外部公開（Ingress/Kong連携）       | 実際のAPI公開運用を踏まえた接続イメージを提示     |
+| 4    | APIOps（OpenAPI→Kong自動反映）によりKong GatewayへBookInfo設定をデプロイ | API変更が即座かつ一貫性を持って適用されるプロセスを実証 |
+| 5    | 管理画面・Dev Portal等でAPI/ドキュメント反映を確認       | 運用結果の可視化および再現性の高さを確認 |
 
 
 
 ## 各ステップの詳細手順
 
 ### 1.  資材（コード/構成ファイル）確認と環境変数の設定
-1. GitHubリポジトリの取得またはブラウザ参照
+1. GitHubリポジトリの取得
 ```
-git clone https://github.com/<ORG>/<REPO>.git
-cd <REPO>
-```
-
-2. ゴールデンイメージ（Dockerfile）の内容確認
-```
-cat kong-gateway/Dockerfile
-# 必要なプラグインや設定が反映されているかご確認ください
+git clone https://github.com/enokidak/kong-bootcamp.git
 ```
 
-3. IaC（インフラ定義ファイル）の内容確認
+2. Workflow（CICD定義ファイル）の内容確認
 ```
-ls -l iac/
-cat iac/values.yaml
-# KubernetesやHelm、Terraform等の定義内容をご確認ください
+cat .github/workflows/deploy_oas.yaml
+cat .github/workflows/upload_doc.yaml
+cat .github/workflows/upload_spec.yaml
 ```
 
-4. 環境変数の設定
+3. 環境変数の設定
 ```
 GIT_REPO=enokidak/kong-bootcamp
 
@@ -82,56 +73,30 @@ gh secret set KONNECT_TOKEN --body $KONNECT_TOKEN --repo $GIT_REPO
 
 
 ### 2. BookInfoアプリのKubernetesデプロイ
-0. アプリ公開用のContourをデプロイ
-Contourのインストール
-今回はディストリビューション依存をなくすため、Tanzu Packagesは使わずに普通にOSS版のContourをインストールする。
 
+1. サンプルアプリ公開用のIngress Controller(Contour)をデプロイ
 ```
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install contour bitnami/contour --namespace projectcontour --create-namespace
 ```
-Podが立ち上がってEnvoyのServiceにExternal-IPが割り振られればOK。
-```
-kubectl get all -n projectcontour
-NAME                                   READY   STATUS    RESTARTS   AGE
-pod/contour-contour-64c7959cf9-vk684   1/1     Running   0          91s
-pod/contour-envoy-b72ld                2/2     Running   0          91s
-pod/contour-envoy-bkxvp                2/2     Running   0          91s
-pod/contour-envoy-plspq                2/2     Running   0          91s
 
-NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
-service/contour         ClusterIP      10.102.173.86    <none>           8001/TCP                     91s
-service/contour-envoy   LoadBalancer   10.100.171.238   10.214.154.165   80:32533/TCP,443:31826/TCP   91s
-
-NAME                           DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
-daemonset.apps/contour-envoy   3         3         3       3            3           <none>          91s
-
-NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/contour-contour   1/1     1            1           91s
-
-NAME                                         DESIRED   CURRENT   READY   AGE
-replicaset.apps/contour-contour-64c7959cf9   1         1         1       92s
-```
-
-1. Namespaceの作成
+2. Namespaceの作成
 
 ```
 kubectl create ns bookinfo
 ```
 
-2. BookInfoアプリ本体のデプロイ
+3. BookInfoアプリ本体のデプロイ
 
 ```
 kubectl apply -f bookinfo/platform/kube/bookinfo.yaml -n bookinfo
 ```
 
-3. Ingressリソース適用（Kong Gatewayと連携）
+4. Ingressリソース適用（Kong Gatewayと連携）
 
 ```
 kubectl apply -f bookinfo/productpage-ingress.yaml
 ```
-
-※ bookinfoディレクトリはGitHub等からcloneしてください。
 
 ### 3. BookInfoサービスがKubernetes上で稼働していることを確認
 ```
@@ -141,31 +106,18 @@ kubectl get ingress
 ```
 
 - すべてのPodがRunningになっていること
-- Ingress（Kong）が作成されていること
+- Ingressが作成されていること
 
-### 4. Kong GatewayへBookInfo用設定（Kongリソース）を反映
-1. deck用マニフェストの確認
-※ deck-bookinfo.yaml などでKong用の設定を用意（Service/Route/Plugin等）
-
-2. deck CLIでKonnectへ反映
-```
-deck --konnect-addr https://us.api.konghq.com \
-  --konnect-control-plane-name default \
-  --konnect-token <KONNECT_TOKEN> \
-  gateway sync deck-bookinfo.yaml
-```
-※ <KONNECT_TOKEN>はKong KonnectのAPIキーに置き換えてください
-
-### 5. APIOps（OpenAPI→Kong自動反映）ワークフロー実行
+### 4. APIOps（OpenAPI→Kong自動反映）によりKong GatewayへBookInfo設定をデプロイ
 1. OpenAPI Specを編集（例: エンドポイント追加/修正）
 
 ```
-vi apiops/docs/openapi/api-spec.yaml
+vi bookinfo/openapi.yaml
 ```
 
 2. GitHubにコミット・プッシュ
 ```
-git add apiops/docs/openapi/api-spec.yaml
+git add bookinfo/openapi.yaml
 git commit -m "Update API Spec for BookInfo"
 git push origin main
 ```
@@ -173,9 +125,7 @@ git push origin main
 3. GitHub Actions でワークフロー起動・進捗確認
 
 - [Actions]タブ → 「Convert OpenAPI Spec to Kong and Deploy」を確認
-- Lint→変換→差分確認→Kong Gatewayへの自動反映
-
-※ コマンド実行例は前述APIOps手順と同様（deck, inso, curl など）
+- Lint→変換→差分確認→Kong Gatewayへの自動反映が実行されていることを確認
 
 ### 6. Dev Portal・API管理画面でAPI/ドキュメント反映を確認
 - Kong Konnect の管理画面でAPI定義・エンドポイントが反映されていることを確認
