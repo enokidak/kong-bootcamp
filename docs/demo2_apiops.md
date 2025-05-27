@@ -63,10 +63,14 @@ GIT_REPO=enokidak/kong-bootcamp
 KONNECT_REGION=us
 CONTROL_PLANE=default
 TAG=bookinfo
+PRODUCT_NAME=bookinfo
+VERSION_NAME=v1
 
 gh variable set KONNECT_REGION --body $KONNECT_REGION --repo $GIT_REPO
 gh variable set CONTROL_PLANE --body $CONTROL_PLANE --repo $GIT_REPO
 gh variable set TAG --body $TAG --repo $GIT_REPO
+gh variable set PRODUCT_NAME --body $PRODUCT_NAME --repo $GIT_REPO
+gh variable set VERSION_NAME --body $VERSION_NAME --repo $GIT_REPO
 
 KONNECT_TOKEN=<your-konnect-pat>
 gh secret set KONNECT_TOKEN --body $KONNECT_TOKEN --repo $GIT_REPO
