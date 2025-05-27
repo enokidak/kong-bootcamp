@@ -116,7 +116,7 @@ kubectl get pods,svc,ing -n bookinfo
 ```
 deck --konnect-addr https://us.api.konghq.com \
   --konnect-control-plane-name default \
-  --konnect-token <KONNECT_TOKEN> \
+  --konnect-token $KONNECT_TOKEN \
   gateway sync deck-bookinfo.yaml
 ```
 ※ <KONNECT_TOKEN>はKong KonnectのAPIキーに置き換えてください
