@@ -1,12 +1,6 @@
 name: Upload API Spec to Konnect / Dev Portal
 
 on:
-  # If you want to upload spec before testing or deploying it,
-  # uncomment the followings.
-  #
-  #push:
-  #  paths:
-  #    - docs/openapi/api-spec.yaml
   workflow_run:
     # Run after deploy_oas.yaml
     workflows: ["Convert OpenAPI Spec to Kong and Deploy"]
@@ -32,7 +26,7 @@ jobs:
       - name: Upload api-spec.yaml
         shell: bash
         run: |
-          file="apiops/docs/openapi/api-spec.yaml"
+          file="bookinfo/openapi.yaml"
           msg="Document '$file' has been successfully uploaded."
           return_code=0
           set -x
