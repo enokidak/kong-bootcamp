@@ -36,16 +36,15 @@ CICDとIaCを活用することで、
 1. Kong Konnect管理画面にログイン
    
    ブラウザで Kong Konnect にアクセスし、ご自身のアカウントでログインしてください。
-3. 「ゴールデンイメージ」運用イメージの可視化
+2. 手動によるData Planeノードのデプロイ
 
-   SaaSの統合管理で標準イメージやライフサイクルが一元管理されている点を確認します。
-   管理画面上でのバージョン管理や適用状況もご覧いただけます。
+   管理画面上で標準イメージの選択やバージョン指定、デプロイ先クラスタの指定など、個別のオペレーションを都度実施することでData Planeを構築します。
+   > この手法は操作の柔軟性が高い一方で、作業者ごとの手順差異やヒューマンエラーが生じやすくなります。再現性・標準化・自動化の観点では、後述のCICD/IaCによるデプロイ方式が推奨されます。
 
 ### 2.  資材（コード/構成ファイル）確認と環境変数の設定
-1. GitHubリポジトリの取得またはブラウザ参照
+1. GitHubリポジトリの取得
 ```
-git clone https://github.com/<ORG>/<REPO>.git
-cd <REPO>
+git clone https://github.com/enokidak/kong-bootcamp.git
 ```
 
 2. ゴールデンイメージ（Dockerfile）の内容確認
@@ -54,37 +53,41 @@ cat kong-gateway/Dockerfile
 # 必要なプラグインや設定が反映されているかご確認ください
 ```
 
-3. IaC（インフラ定義ファイル）の内容確認
+3. Workflow（CICD定義ファイル）の内容確認
 ```
-ls -l iac/
-cat iac/values.yaml
-# KubernetesやHelm、Terraform等の定義内容をご確認ください
+cat .github/workflows/build-kong-image.yaml
+cat .github/workflows/deploy_dp.yaml
 ```
 
 4. 環境変数の設定
 ```
-
+# Azure関連
 AKS_RESOURCE_GROUP=<your-azure-resource-group>
 AKS_CLUSTER_NAME=<your-aks-cluster>
-GH_TOKEN=<your-pat>
-GH_TOKEN=<your-azure-credentials>
-KONNECT_TOKEN=<your-konnect-pat>
-CP_NAME=default
-KONG_REPO=ghcr.io/enokidak/kong-bootcamp/kong-gateway
-GIT_REPO=enokidak/kong-bootcamp
-
 az ad sp create-for-rbac --name "kongtraining-enk-app" --role contributor \
   --scopes /subscriptions/73ef49b8-168e-4e6e-8e23-a5fed757e4f5/resourceGroups/rg-kong-training \
   --json-auth
+AZURE_CREDENTIALS=<your-azure-credentials>
 
+gh variable set AKS_RESOURCE_GROUP --body $AKS_RESOURCE_GROUP --repo $GIT_REPO
+gh variable set AKS_CLUSTER_NAME --body $AKS_CLUSTER_NAME --repo $GIT_REPO
 gh secret set AZURE_CREDENTIALS --body $AZURE_CREDENTIALS
-gh secret set KONNECT_TOKEN --body $KONNECT_TOKEN
+
+
+# Kong関連
+KONNECT_TOKEN=<your-konnect-pat>
+CP_NAME=default
+
+gh secret set KONNECT_TOKEN --body $KONNECT_TOKEN --repo $GIT_REPO
+gh variable set CP_NAME --body $CP_NAME --repo $GIT_REPO
+
+
+# Github関連
+GH_TOKEN=<your-pat>
+KONG_REPO=ghcr.io/enokidak/kong-bootcamp/kong-gateway
+
 gh secret set GH_TOKEN --body $GH_TOKEN
-
-
-
-
-
+gh variable set KONG_REPO --body $KONG_REPO --repo $GIT_REPO
 ```
 
 ### 3. GitHub Actionsnによる、ゴールデンイメージの自動ビルドと脆弱性スキャン
@@ -95,17 +98,8 @@ gh secret set GH_TOKEN --body $GH_TOKEN
 3. 進捗・ビルド/スキャン成功を確認
    ワークフロー画面で各ステップが成功しているかご確認ください。
 4. ビルド済みイメージの確認
-```
-# ghcr.ioにpushされたことをWebで確認
-https://github.com/users/enokidak/packages/container/package/kong-bootcamp%2Fkong-gateway
-```
 
 ### 4. IaCによる、Data Planeの自動デプロイ
 1. GitHub [Actions] → [Deploy Kong Data Plane] を開く
 2. `image_tag`に上記で作成したタグを指定し実行
 3. 完了後、kubectlやCloudコンソールでPodが立ち上がっていることを確認
-
-### 5. 動作確認
-1. サービス作成
-2. ルート作成
-3.環境内から疎通を試みる。CICDによってデプロイしたKong DPを使用できていることを確認する
